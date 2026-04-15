@@ -1,0 +1,124 @@
+
+
+CREATE DATABASE [PM02];
+GO
+
+USE [PM02]
+GO
+
+-- =============================================
+-- 2. СОЗДАНИЕ ТАБЛИЦ (DDL)
+-- =============================================
+
+-- Справочник ролей
+CREATE TABLE [dbo].[Role](
+	[id] [int] NOT NULL CONSTRAINT [PK_Role] PRIMARY KEY,
+	[Name] [nvarchar](50) NULL
+);
+
+-- Справочник статусов
+CREATE TABLE [dbo].[OrderStatus](
+	[id] [int] NOT NULL CONSTRAINT [PK_OrderStatus] PRIMARY KEY,
+	[Name] [nvarchar](50) NULL
+);
+
+-- Справочник типов продукции
+CREATE TABLE [dbo].[ProductType](
+	[id] [int] NOT NULL CONSTRAINT [PK_ProductType] PRIMARY KEY,
+	[Name] [nvarchar](50) NULL
+);
+
+-- Таблица пользователей
+CREATE TABLE [dbo].[User](
+	[id] [int] NOT NULL CONSTRAINT [PK_User] PRIMARY KEY,
+	[LastName] [nvarchar](50) NULL,
+	[FirstName] [nvarchar](50) NULL,
+	[Surname] [nvarchar](50) NULL,
+	[Login] [nvarchar](50) NULL,
+	[Password] [nvarchar](50) NULL,
+	[Mail] [nvarchar](50) NULL,
+	[RoleID] [int] NULL CONSTRAINT [FK_User_Role] FOREIGN KEY REFERENCES [dbo].[Role]([id])
+);
+
+-- Таблица товаров
+CREATE TABLE [dbo].[Product](
+	[id] [int] NOT NULL CONSTRAINT [PK_Product] PRIMARY KEY,
+	[Name] [nvarchar](50) NULL,
+	[ProductTypeID] [int] NULL CONSTRAINT [FK_Product_ProductType] FOREIGN KEY REFERENCES [dbo].[ProductType]([id]),
+	[Description] [nvarchar](max) NULL,
+	[Composition] [nvarchar](200) NULL,
+	[Price] [decimal](10, 2) NULL,
+	[Discount] [decimal](5, 2) NULL,
+	[isDiscountActive] [bit] NULL,
+	[MinStock] [int] NULL,
+	[StockQuantity] [int] NULL,
+	[Photo] [nvarchar](100) NULL
+);
+
+-- Таблица заказов (создается последней, так как зависит от всех вышеперечисленных)
+CREATE TABLE [dbo].[Order](
+	[id] [int] NOT NULL CONSTRAINT [PK_Order] PRIMARY KEY,
+	[DeliveryAddress] [nvarchar](200) NULL,
+	[UserFIOID] [int] NULL CONSTRAINT [FK_Order_UserFIO] FOREIGN KEY REFERENCES [dbo].[User]([id]),
+	[UserLoginID] [int] NULL CONSTRAINT [FK_Order_UserLogin] FOREIGN KEY REFERENCES [dbo].[User]([id]),
+	[UserRoleID] [int] NULL CONSTRAINT [FK_Order_Role] FOREIGN KEY REFERENCES [dbo].[Role]([id]),
+	[OrderStatusID] [int] NULL CONSTRAINT [FK_Order_OrderStatus] FOREIGN KEY REFERENCES [dbo].[OrderStatus]([id]),
+	[OrderDate] [datetime] NULL,
+	[OrderDelivery] [datetime] NULL,
+	[ProductID] [int] NULL CONSTRAINT [FK_Order_Product] FOREIGN KEY REFERENCES [dbo].[Product]([id]),
+	[ProductTypeID] [int] NULL CONSTRAINT [FK_Order_ProductType] FOREIGN KEY REFERENCES [dbo].[ProductType]([id]),
+	[Quantity] [int] NULL,
+	[PriceINOrder] [decimal](10, 2) NULL,
+	[OrderTotal] [decimal](10, 2) NULL
+);
+GO
+
+-- =============================================
+-- 3. ЗАПОЛНЕНИЕ ДАННЫМИ (DML)
+-- =============================================
+
+INSERT [dbo].[Role] ([id], [Name]) VALUES 
+(1, N'Пользователь'), (2, N'Менеджер'), (3, N'Администратор');
+
+INSERT [dbo].[OrderStatus] ([id], [Name]) VALUES 
+(1, N'Новый'), (2, N'Доставлен'), (3, N'Подтвержден'), (4, N'В доставке'), (5, N'Отменен');
+
+INSERT [dbo].[ProductType] ([id], [Name]) VALUES 
+(1, N'Капсулы'), (2, N'Таблетки'), (3, N'Спрей'), (4, N'Сироп'), (5, N'Порошок'), (6, N'Мазь');
+
+INSERT [dbo].[User] ([id], [LastName], [FirstName], [Surname], [Login], [Password], [Mail], [RoleID]) VALUES 
+(1, N'Иванов', N'Пётр', N'Сергеевич', N'ivanov_ps', N'user123', N'ivanov@mail.ru', 1),
+(2, N'Соколова', N'Анна', N'Викторовна', N'sokolova_av', N'user123', N'sokolova@mail.ru', 1),
+(3, N'Крылов', N'Максим', N'Игоревич', N'manager', N'manager123', N'manager@mail.ru', 2),
+(4, N'Орлова', N'Елена', N'Дмитриевна', N'admin', N'admin123', N'admin@mail.ru', 3),
+(5, N'Петрова', N'Мария', N'Олеговна', N'petrova_mo', N'user123', N'petrova@mail.ru', 1),
+(6, N'Смирнов', N'Андрей', N'Павлович', N'smirnov_ap', N'user123', N'smirnov@mail.ru', 1),
+(7, N'Егорова', N'Светлана', N'Ильинична', N'egorova_si', N'user123', N'egorova@mail.ru', 1),
+(8, N'Новиков', N'Денис', N'Алексеевич', N'novikov_da', N'user123', N'novikov@mail.ru', 2);
+
+INSERT [dbo].[Product] ([id], [Name], [ProductTypeID], [Description], [Composition], [Price], [Discount], [isDiscountActive], [MinStock], [StockQuantity], [Photo]) VALUES 
+(1, N'Арбидол', 1, N'Противовирусное', N'Умифеновир', 420.00, 15.00, 1, 10, 58, N'Res/arbidol.jpg'),
+(2, N'Кетанов', 2, N'Обезболивающее', N'Кеторолак', 185.50, 5.00, 1, 12, 103, N'Res/ketanov.jpg'),
+(3, N'Мирамистин', 3, N'Антисептик', N'Бензилдиметил', 359.99, 12.00, 1, 8, 47, N'Res/miramistin.jpg'),
+(4, N'Нурофен', 4, N'Жаропонижающее', N'Ибупрофен', 276.40, 0.00, 0, 15, 64, N''),
+(5, N'Парацетамол 500', 2, N'Жаропонижающее', N'Парацетамол', 79.90, 20.00, 1, 30, 210, N''),
+(10, N'Лизобакт', 2, N'Для горла', N'Лизоцим', 332.20, 11.00, 1, 11, 52, N'Res/lizobakt.jpg'),
+(12, N'Антигриппин Макс', 5, N'От простуды', N'Парацетамол', 349.00, 13.00, 1, 8, 22, N''),
+(13, N'Доктор Мом', 4, N'От кашля', N'Экстракты', 264.50, 6.00, 1, 12, 31, N'Res/dr_mom.jpg'),
+(15, N'Супрастин', 2, N'Антигистаминное', N'Хлоропирамин', 168.80, 4.00, 1, 10, 61, N''),
+(6, N'Аквалор Софт', 3, N'Спрей для носа', N'Морская вода', 315.00, 10.00, 1, 7, 39, N'Res/aqualor_soft.jpg'),
+(7, N'ТераФлю', 5, N'Порошок', N'Парацетамол', 510.00, 7.00, 1, 9, 26, N''),
+(8, N'Левомеколь', 6, N'Мазь', N'Хлорамфеникол', 198.75, 18.00, 1, 6, 17, N'Res/levomekol.jpg');
+
+INSERT [dbo].[Order] ([id], [DeliveryAddress], [UserFIOID], [UserLoginID], [UserRoleID], [OrderStatusID], [OrderDate], [OrderDelivery], [ProductID], [ProductTypeID], [Quantity], [PriceINOrder], [OrderTotal]) VALUES 
+(1, N'г. Москва, ул. Ленина, д. 15, кв. 24', 1, 1, 1, 1, '2026-03-10T10:15:00', '2026-03-12T18:00:00', 1, 1, 2, 357.00, 714.00),
+(2, N'г. Москва, ул. Ленина, д. 15, кв. 24', 1, 1, 1, 1, '2026-03-10T10:15:00', '2026-03-12T18:00:00', 3, 3, 1, 316.79, 316.79),
+(3, N'г. Казань, ул. Победы, д. 7, кв. 12', 2, 2, 1, 2, '2026-03-09T09:00:00', '2026-03-11T15:30:00', 5, 2, 3, 63.92, 191.76),
+(4, N'г. Казань, ул. Победы, д. 7, кв. 12', 2, 2, 1, 2, '2026-03-09T09:00:00', '2026-03-11T15:30:00', 10, 2, 1, 295.66, 295.66),
+(5, N'г. Тула, пр-т Мира, д. 4', 5, 5, 1, 3, '2026-03-12T12:40:00', '2026-03-13T16:30:00', 2, 2, 1, 176.23, 176.23),
+(10, N'г. Мытищи, ул. Мира, д. 11', 1, 1, 1, 2, '2026-03-08T17:20:00', '2026-03-10T12:00:00', 4, 4, 1, 276.40, 276.40),
+(11, N'г. Мытищи, ул. Мира, д. 11', 1, 1, 1, 2, '2026-03-08T17:20:00', '2026-03-10T12:00:00', 15, 2, 2, 162.05, 324.10),
+(12, N'г. Одинцово, ул. Северная, д. 3', 8, 8, 2, 1, '2026-03-14T18:10:00', '2026-03-16T19:00:00', 12, 5, 1, 303.63, 303.63);
+GO
+
+PRINT 'База данных PM01 успешно создана и заполнена данными.';
